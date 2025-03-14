@@ -3,8 +3,10 @@ package com.farcr.nomansland.common.world.generation;
 import com.farcr.nomansland.NoMansLand;
 import com.farcr.nomansland.common.registry.blocks.NMLBlocks;
 import com.farcr.nomansland.common.registry.worldgen.NMLBiomes;
+import com.mojang.serialization.MapCodec;
 import com.terraformersmc.biolith.api.surface.SurfaceGeneration;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -20,6 +22,9 @@ public class NMLSurfaceRules {
     private static final SurfaceRules.RuleSource SILT = makeStateRule(NMLBlocks.SILT.get());
     private static final SurfaceRules.RuleSource WATER = makeStateRule(Blocks.WATER);
     private static final SurfaceRules.RuleSource GRAVEL = makeStateRule(Blocks.GRAVEL);
+    private static final SurfaceRules.RuleSource STONE = makeStateRule(Blocks.STONE);
+    private static final SurfaceRules.RuleSource TUFF = makeStateRule(Blocks.TUFF);
+    private static final SurfaceRules.RuleSource DEEPSLATE = makeStateRule(Blocks.DEEPSLATE);
 
     public static void register() {
 
@@ -90,14 +95,32 @@ public class NMLSurfaceRules {
         SurfaceRules.RuleSource caves = SurfaceRules.ifTrue(
                 SurfaceRules.isBiome(NMLBiomes.CAVES),
                 SurfaceRules.sequence(
-                        SurfaceRules.state(Blocks.STONE.defaultBlockState())
+                        STONE
                 )
         );
 
-        SurfaceRules.RuleSource cave_depths = SurfaceRules.ifTrue(
+        SurfaceRules.RuleSource caveDepths = SurfaceRules.ifTrue(
                 SurfaceRules.isBiome(NMLBiomes.CAVE_DEPTHS),
                 SurfaceRules.sequence(
-                        SurfaceRules.state(Blocks.DEEPSLATE.defaultBlockState())
+                        DEEPSLATE
+                )
+        );
+
+        SurfaceRules.RuleSource undergroundStone = SurfaceRules.ifTrue(
+                SurfaceRules.not(
+                        SurfaceRules.abovePreliminarySurface()
+                ),
+                SurfaceRules.sequence(
+                        SurfaceRules.ifTrue(
+                                SurfaceRules.not(
+                                        SurfaceRules.yStartCheck(VerticalAnchor.absolute(20), 1)
+                                ),
+                                makeStateRule(Blocks.GOLD_BLOCK)
+                        ),
+                        SurfaceRules.ifTrue(
+                                SurfaceRules.verticalGradient("deepslate", VerticalAnchor.absolute(0), VerticalAnchor.absolute(8)),
+                                makeStateRule(Blocks.DIAMOND_BLOCK)
+                        )
                 )
         );
 
@@ -110,7 +133,8 @@ public class NMLSurfaceRules {
                 SurfaceRules.ifTrue(SurfaceRules.abovePreliminarySurface(),
                     SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(0, true, CaveSurface.FLOOR), SurfaceRules.sequence(
                             // Cave Biomes
-                            caves, cave_depths)))
+                            caves, caveDepths))),
+                undergroundStone
         );
     }
 
